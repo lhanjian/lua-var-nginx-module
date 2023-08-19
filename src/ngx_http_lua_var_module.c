@@ -160,3 +160,59 @@ ngx_http_lua_var_ffi_scheme(ngx_http_request_t *r, ngx_str_t *scheme)
 
     return NGX_OK;
 }
+
+
+ngx_int_t
+ngx_http_lua_var_ffi_ssl_protocol(ngx_http_request_t *r, ngx_str_t *ssl_protocol)
+{
+#if (NGX_HTTP_SSL)
+
+    if (r->connection->ssl) {
+        ssl_protocol->data = (u_char *) SSL_get_version(r->connection->ssl->connection);
+        ssl_protocol->len = ngx_strlen(ssl_protocol->data);
+        return NGX_OK;
+    }
+
+#endif
+
+    ssl_protocol->data = "";
+    ssl_protocol->len = 0;
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_lua_var_ffi_ssl_cipher(ngx_http_request_t *r, ngx_str_t *ssl_cipher)
+{
+#if (NGX_HTTP_SSL)
+    if (r->connection->ssl) {
+        ssl_cipher->data = (u_char *) SSL_get_cipher_name(r->connection->ssl->connection);
+        ssl_cipher->len = ngx_strlen(ssl_cipher->data);
+        return NGX_OK;
+    }
+#endif
+    ssl_cipher->data = "";
+    ssl_cipher->len = 0;
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_lua_var_ffi_ssl_server_name(ngx_http_request_t *r, ngx_str_t *ssl_server_name)
+{
+#if (NGX_HTTP_SSL)
+    if (r->connection->ssl) {
+        const char  *servername;
+        servername = SSL_get_servername(r->connection->ssl->connection,
+                                        TLSEXT_NAMETYPE_host_name);
+        if (servername) {
+            ssl_server_name->data = (u_char *) servername;
+            ssl_server_name->len = ngx_strlen(servername);
+            return NGX_OK;
+        }
+    }
+#endif
+    ssl_server_name->data = "";
+    ssl_server_name->len = 0;
+    return NGX_OK;
+}
